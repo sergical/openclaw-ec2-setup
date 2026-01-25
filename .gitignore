@@ -1,0 +1,6 @@
+# Instance info (contains IPs, instance IDs)
+.instance-info
+.instance-info.backup*
+
+# Environment variables (may contain Tailscale auth keys)
+.env

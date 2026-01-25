@@ -1,0 +1,74 @@
+# Oh My Zsh
+export ZSH="$HOME/.oh-my-zsh"
+ZSH_THEME="robbyrussell"
+plugins=(git zsh-autosuggestions zsh-syntax-highlighting z)
+source $ZSH/oh-my-zsh.sh
+
+# Editor
+export EDITOR="nano"
+
+# Path
+export PATH="$HOME/.local/bin:$PATH"
+
+# NVM
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+# ============================================
+# Aliases - Shell
+# ============================================
+alias ez='$EDITOR ~/.zshrc'
+alias sz='source ~/.zshrc'
+alias ll='ls -la'
+alias ..='cd ..'
+alias ...='cd ../..'
+
+# ============================================
+# Aliases - Git
+# ============================================
+alias gs='git status'
+alias gd='git diff'
+alias gl='git log --oneline -10'
+alias gp='git push'
+alias gfp='git fetch origin && git pull origin'
+alias gac='git add . && git commit -m'
+
+# ============================================
+# Aliases - tmux
+# ============================================
+alias ta='tmux attach -t'
+alias tl='tmux list-sessions'
+alias tn='tmux new -s'
+alias tk='tmux kill-session -t'
+
+# ============================================
+# Aliases - Dev tools (if installed)
+# ============================================
+command -v pnpm &>/dev/null && alias pnd='pnpm run dev'
+command -v opencode &>/dev/null && alias oc='opencode'
+command -v clawdbot &>/dev/null && alias cb='clawdbot'
+command -v claude &>/dev/null && alias c='claude'
+
+# ============================================
+# AWS - EC2 Bedrock workaround
+# ============================================
+# Clawdbot checks for AWS_PROFILE env var to detect credentials
+# Setting to 'default' signals credentials are available (via IMDS)
+if [[ -f /sys/hypervisor/uuid ]] && grep -qi ec2 /sys/hypervisor/uuid 2>/dev/null; then
+  export AWS_PROFILE=default
+  export AWS_REGION=${AWS_REGION:-us-east-1}
+fi
+
+# ============================================
+# Fix terminal issues (backspace, etc)
+# ============================================
+stty sane 2>/dev/null
+stty erase ^? 2>/dev/null
+
+# ============================================
+# Welcome message
+# ============================================
+if [ -f ~/.welcome ]; then
+    cat ~/.welcome
+fi
