@@ -170,6 +170,67 @@ sudo tailscale up
 | t3.medium | 2 | 4 GB | ~$30/mo | **Recommended** for dev work |
 | t3.large | 2 | 8 GB | ~$60/mo | More comfortable for heavy use |
 
+## Security
+
+### How Access Works
+
+| Method | When Available | Authentication |
+|--------|----------------|----------------|
+| Public IP + SSH key | Port 22 open in security group | Your SSH private key |
+| Tailscale SSH | Tailscale running on both devices | Tailscale identity |
+
+**Recommended:** Use Tailscale-only mode (no public SSH) for maximum security.
+
+### Lock Down Instance (Tailscale Only)
+
+Remove public SSH access so only Tailscale can connect:
+
+```bash
+# Close port 22 to the internet
+aws ec2 revoke-security-group-ingress \
+  --group-name "openclaw-home-sg" \
+  --protocol tcp --port 22 --cidr 0.0.0.0/0 \
+  --region us-east-1
+
+# Verify (should return empty array)
+aws ec2 describe-security-groups \
+  --group-names "openclaw-home-sg" \
+  --region us-east-1 \
+  --query 'SecurityGroups[0].IpPermissions'
+```
+
+Now connect via: `ssh ec2-user@<tailscale-hostname>`
+
+### Emergency Access (Re-open SSH)
+
+If Tailscale breaks and you need to get back in:
+
+```bash
+# Option 1: Open to your current IP only (more secure)
+MY_IP=$(curl -s ifconfig.me)
+aws ec2 authorize-security-group-ingress \
+  --group-name "openclaw-home-sg" \
+  --protocol tcp --port 22 --cidr "$MY_IP/32" \
+  --region us-east-1
+
+# Option 2: Open to everyone (use temporarily, then close)
+aws ec2 authorize-security-group-ingress \
+  --group-name "openclaw-home-sg" \
+  --protocol tcp --port 22 --cidr "0.0.0.0/0" \
+  --region us-east-1
+```
+
+Then connect via: `ssh -i ~/.ssh/openclaw-home-key.pem ec2-user@<public-ip>`
+
+### Recovery: Tailscale Down + Locked Out
+
+If Tailscale is broken AND port 22 is closed:
+
+1. Re-open port 22 (see above)
+2. SSH via public IP
+3. Fix Tailscale: `sudo systemctl restart tailscaled && sudo tailscale up`
+4. Close port 22 again
+
 ## Troubleshooting
 
 ### Can't connect after provisioning
