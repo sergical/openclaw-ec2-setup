@@ -80,7 +80,7 @@ The full setup uses ~8GB:
 | Homebrew + GCC + binutils | ~1.3GB |
 | Bun | ~100MB |
 | Node.js (nvm) | ~200MB |
-| clawdbot + skills | ~1GB |
+| openclaw + skills | ~1GB |
 | npm packages/cache | ~1-2GB |
 | OS + base packages | ~3GB |
 
@@ -95,7 +95,7 @@ The full setup uses ~8GB:
 | **Node.js** | LTS version via nvm |
 | **Bun** | Fast JavaScript runtime |
 | **opencode** | AI coding assistant CLI |
-| **clawdbot** | AI assistant with Bedrock support (auto-configured) |
+| **openclaw** | AI assistant with Bedrock support (auto-configured) |
 | **Tailscale** | Mesh VPN (auto-connects if TAILSCALE_AUTHKEY set) |
 | **tmux** | Terminal multiplexer |
 | **Build tools** | git, jq, etc. |
@@ -132,20 +132,20 @@ cd ec2-setup
 ./teardown.sh         # Stop when done (saves money, keeps data)
 ```
 
-### Clawdbot Setup
+### OpenClaw Setup
 
-Clawdbot is auto-installed and configured for Bedrock. On first connect:
+OpenClaw is auto-installed and configured for Bedrock. On first connect:
 
 ```bash
 # Start the gateway
-clawdbot gateway start
+openclaw gateway start
 
 # Verify Bedrock models are available
-clawdbot models list
+openclaw models list
 # Should show: amazon-bedrock/us.anthropic.claude-opus... with Auth: yes
 
 # Run the onboarding wizard
-clawdbot onboard
+openclaw onboard
 ```
 
 ### Tailscale Setup

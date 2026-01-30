@@ -255,7 +255,7 @@ su - ubuntu -c 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" && brew i
 
 # Install AI tools
 su - ubuntu -c 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" && source ~/.nvm/nvm.sh && npm install -g opencode-ai'
-su - ubuntu -c 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" && source ~/.nvm/nvm.sh && npm install -g clawdbot'
+su - ubuntu -c 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" && source ~/.nvm/nvm.sh && npm install -g openclaw'
 
 # Oh My Zsh
 su - ubuntu -c 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended'
@@ -295,16 +295,16 @@ alias ta='tmux attach -t'
 alias tl='tmux list-sessions'
 alias tn='tmux new -s'
 alias oc='opencode'
-alias cb='clawdbot'
+alias cb='openclaw'
 
 # Update all tools to latest
-alias update-tools='brew update && brew upgrade && npm update -g opencode-ai clawdbot && echo "Tools updated!"'
+alias update-tools='brew update && brew upgrade && npm update -g opencode-ai openclaw && echo "Tools updated!"'
 
 # Clean up disk space
 alias cleanup='brew cleanup -s && npm cache clean --force && rm -rf ~/.cache/* && echo "Cleaned!" && df -h /'
 
 # AWS - EC2 instance role workaround for Bedrock
-# Clawdbot checks for AWS_PROFILE env var to detect credentials
+# OpenClaw checks for AWS_PROFILE env var to detect credentials
 # Setting to 'default' signals credentials are available (via IMDS)
 export AWS_PROFILE=default
 export AWS_REGION=${AWS_REGION:-us-east-1}
@@ -318,8 +318,8 @@ __TAILSCALE_SETUP__
 # Set zsh as default
 chsh -s /bin/zsh ubuntu
 
-# Configure clawdbot for Bedrock with US inference profile
-su - ubuntu -c 'export AWS_PROFILE=default AWS_REGION=us-east-1 && source ~/.nvm/nvm.sh && clawdbot config set models.bedrockDiscovery.enabled true && clawdbot config set models.bedrockDiscovery.region us-east-1 && clawdbot config set models.providers.amazon-bedrock --json "{\"baseUrl\":\"https://bedrock-runtime.us-east-1.amazonaws.com\",\"api\":\"bedrock-converse-stream\",\"auth\":\"aws-sdk\",\"models\":[{\"id\":\"us.anthropic.claude-opus-4-5-20251101-v1:0\",\"name\":\"Claude Opus 4.5 (US)\",\"reasoning\":true,\"input\":[\"text\",\"image\"],\"contextWindow\":200000,\"maxTokens\":8192,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0}}]}" && clawdbot models set amazon-bedrock/us.anthropic.claude-opus-4-5-20251101-v1:0' || true
+# Configure openclaw for Bedrock with US inference profile
+su - ubuntu -c 'export AWS_PROFILE=default AWS_REGION=us-east-1 && source ~/.nvm/nvm.sh && openclaw config set models.bedrockDiscovery.enabled true && openclaw config set models.bedrockDiscovery.region us-east-1 && openclaw config set models.providers.amazon-bedrock --json "{\"baseUrl\":\"https://bedrock-runtime.us-east-1.amazonaws.com\",\"api\":\"bedrock-converse-stream\",\"auth\":\"aws-sdk\",\"models\":[{\"id\":\"us.anthropic.claude-opus-4-5-20251101-v1:0\",\"name\":\"Claude Opus 4.5 (US)\",\"reasoning\":true,\"input\":[\"text\",\"image\"],\"contextWindow\":200000,\"maxTokens\":8192,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0}}]}" && openclaw models set amazon-bedrock/us.anthropic.claude-opus-4-5-20251101-v1:0' || true
 
 # Signal completion
 touch /home/ubuntu/.bootstrap-complete
@@ -348,7 +348,7 @@ su - ec2-user -c 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" && brew
 
 # Install AI tools
 su - ec2-user -c 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" && source ~/.nvm/nvm.sh && npm install -g opencode-ai'
-su - ec2-user -c 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" && source ~/.nvm/nvm.sh && npm install -g clawdbot'
+su - ec2-user -c 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" && source ~/.nvm/nvm.sh && npm install -g openclaw'
 
 # Oh My Zsh
 su - ec2-user -c 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended'
@@ -388,16 +388,16 @@ alias ta='tmux attach -t'
 alias tl='tmux list-sessions'
 alias tn='tmux new -s'
 alias oc='opencode'
-alias cb='clawdbot'
+alias cb='openclaw'
 
 # Update all tools to latest
-alias update-tools='brew update && brew upgrade && npm update -g opencode-ai clawdbot && echo "Tools updated!"'
+alias update-tools='brew update && brew upgrade && npm update -g opencode-ai openclaw && echo "Tools updated!"'
 
 # Clean up disk space
 alias cleanup='brew cleanup -s && npm cache clean --force && rm -rf ~/.cache/* && echo "Cleaned!" && df -h /'
 
 # AWS - EC2 instance role workaround for Bedrock
-# Clawdbot checks for AWS_PROFILE env var to detect credentials
+# OpenClaw checks for AWS_PROFILE env var to detect credentials
 # Setting to 'default' signals credentials are available (via IMDS)
 export AWS_PROFILE=default
 export AWS_REGION=${AWS_REGION:-us-east-1}
@@ -411,8 +411,8 @@ __TAILSCALE_SETUP__
 # Set zsh as default
 chsh -s /bin/zsh ec2-user
 
-# Configure clawdbot for Bedrock with US inference profile
-su - ec2-user -c 'export AWS_PROFILE=default AWS_REGION=us-east-1 && source ~/.nvm/nvm.sh && clawdbot config set models.bedrockDiscovery.enabled true && clawdbot config set models.bedrockDiscovery.region us-east-1 && clawdbot config set models.providers.amazon-bedrock --json "{\"baseUrl\":\"https://bedrock-runtime.us-east-1.amazonaws.com\",\"api\":\"bedrock-converse-stream\",\"auth\":\"aws-sdk\",\"models\":[{\"id\":\"us.anthropic.claude-opus-4-5-20251101-v1:0\",\"name\":\"Claude Opus 4.5 (US)\",\"reasoning\":true,\"input\":[\"text\",\"image\"],\"contextWindow\":200000,\"maxTokens\":8192,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0}}]}" && clawdbot models set amazon-bedrock/us.anthropic.claude-opus-4-5-20251101-v1:0' || true
+# Configure openclaw for Bedrock with US inference profile
+su - ec2-user -c 'export AWS_PROFILE=default AWS_REGION=us-east-1 && source ~/.nvm/nvm.sh && openclaw config set models.bedrockDiscovery.enabled true && openclaw config set models.bedrockDiscovery.region us-east-1 && openclaw config set models.providers.amazon-bedrock --json "{\"baseUrl\":\"https://bedrock-runtime.us-east-1.amazonaws.com\",\"api\":\"bedrock-converse-stream\",\"auth\":\"aws-sdk\",\"models\":[{\"id\":\"us.anthropic.claude-opus-4-5-20251101-v1:0\",\"name\":\"Claude Opus 4.5 (US)\",\"reasoning\":true,\"input\":[\"text\",\"image\"],\"contextWindow\":200000,\"maxTokens\":8192,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0}}]}" && openclaw models set amazon-bedrock/us.anthropic.claude-opus-4-5-20251101-v1:0' || true
 
 # Signal completion
 touch /home/ec2-user/.bootstrap-complete
