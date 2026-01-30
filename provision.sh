@@ -1,7 +1,7 @@
 #!/bin/bash
-# provision.sh - Create an EC2 dev instance
+# provision.sh - Create an OpenClaw Home instance
 #
-# Run this from your Mac to spin up a new dev rig on AWS.
+# Run this from your Mac to spin up a new OpenClaw Home on AWS.
 # The instance will be configured via user-data on first boot.
 #
 # Prerequisites: AWS CLI configured (run `aws configure` first)
@@ -16,13 +16,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # ============================================
 # Configuration
 # ============================================
-INSTANCE_NAME="${INSTANCE_NAME:-dev-rig}"
+INSTANCE_NAME="${INSTANCE_NAME:-openclaw-home}"
 INSTANCE_TYPE="${INSTANCE_TYPE:-t3.medium}"  # t2.micro for free tier
 VOLUME_SIZE="${VOLUME_SIZE:-20}"             # GB - Homebrew+bun+tools need ~8GB
 REGION="${AWS_REGION:-us-east-1}"
-KEY_NAME="${KEY_NAME:-dev-rig-key}"
-SECURITY_GROUP_NAME="${SECURITY_GROUP_NAME:-dev-rig-sg}"
-IAM_ROLE_NAME="${IAM_ROLE_NAME:-dev-rig-bedrock-role}"
+KEY_NAME="${KEY_NAME:-openclaw-home-key}"
+SECURITY_GROUP_NAME="${SECURITY_GROUP_NAME:-openclaw-home-sg}"
+IAM_ROLE_NAME="${IAM_ROLE_NAME:-openclaw-home-bedrock-role}"
 ENABLE_BEDROCK="${ENABLE_BEDROCK:-true}"     # Attach IAM role for Bedrock access
 OS="${OS:-al2023}"  # al2023, ubuntu
 PRIVATE_MODE="${PRIVATE_MODE:-auto}"  # auto, true, false
@@ -146,7 +146,7 @@ if [ "$SG_ID" == "None" ] || [ -z "$SG_ID" ]; then
     log "Creating security group: $SECURITY_GROUP_NAME"
     SG_ID=$(aws ec2 create-security-group \
         --group-name "$SECURITY_GROUP_NAME" \
-        --description "Dev rig security group$([ "$OPEN_SSH_PORT" == "false" ] && echo " - private mode (Tailscale only)" || echo " - SSH access")" \
+        --description "OpenClaw Home security group$([ "$OPEN_SSH_PORT" == "false" ] && echo " - private mode (Tailscale only)" || echo " - SSH access")" \
         --vpc-id "$VPC_ID" \
         --region "$REGION" \
         --query 'GroupId' \
@@ -197,7 +197,7 @@ if [ "$ENABLE_BEDROCK" == "true" ]; then
         $IAM_AWS iam create-role \
             --role-name "$IAM_ROLE_NAME" \
             --assume-role-policy-document "$TRUST_POLICY" \
-            --description "IAM role for EC2 dev rig with Bedrock access" > /dev/null
+            --description "IAM role for OpenClaw Home with Bedrock access" > /dev/null
 
         # Attach Bedrock policy
         $IAM_AWS iam attach-role-policy \

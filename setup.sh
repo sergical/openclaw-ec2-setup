@@ -2,7 +2,7 @@
 set -e
 
 # =============================================================================
-# EC2 Dev Rig Setup Script
+# OpenClaw Home Setup Script
 # =============================================================================
 # Idempotent setup script for bootstrapping a dev environment on EC2.
 # Works on Amazon Linux 2023, Amazon Linux 2, and Ubuntu.
@@ -402,7 +402,7 @@ set_default_shell() {
 main() {
     echo ""
     echo "=========================================="
-    echo "       EC2 Dev Rig Setup Script"
+    echo "       OpenClaw Home Setup Script"
     echo "=========================================="
     echo ""
 

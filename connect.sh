@@ -1,5 +1,5 @@
 #!/bin/bash
-# connect.sh - Connect to your dev rig via SSH
+# connect.sh - Connect to your OpenClaw Home via SSH
 #
 # Tries Tailscale IP first (if available), falls back to public IP
 

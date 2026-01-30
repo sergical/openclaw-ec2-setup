@@ -1,5 +1,5 @@
 #!/bin/bash
-# teardown.sh - Stop or terminate your dev rig
+# teardown.sh - Stop or terminate your OpenClaw Home instance
 #
 # Usage:
 #   ./teardown.sh           # Stop instance (keeps data, can restart)
@@ -80,8 +80,8 @@ else
     # Also try to delete security group (may fail if still in use)
     echo "Cleaning up security group (may take a moment)..."
     sleep 5
-    aws ec2 delete-security-group --group-name "dev-rig-sg" --region "$REGION" 2>/dev/null || true
-    aws ec2 delete-security-group --group-name "dev-rig-sg-private" --region "$REGION" 2>/dev/null || true
+    aws ec2 delete-security-group --group-name "openclaw-home-sg" --region "$REGION" 2>/dev/null || true
+    aws ec2 delete-security-group --group-name "openclaw-home-sg-private" --region "$REGION" 2>/dev/null || true
 
     rm -f "$INFO_FILE"
 

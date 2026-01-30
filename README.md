@@ -1,6 +1,6 @@
-# EC2 Dev Rig
+# OpenClaw Home
 
-Bootstrap a complete dev environment on AWS EC2 in minutes. Includes zsh, Tailscale, Node.js, and AI coding tools.
+Bootstrap a complete OpenClaw environment on AWS EC2 in minutes. Includes zsh, Tailscale, Node.js, and AI coding tools.
 
 ## Quick Start
 
@@ -40,7 +40,7 @@ Key options:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `INSTANCE_TYPE` | `t3.medium` | EC2 instance type (`t2.micro` for free tier) |
-| `INSTANCE_NAME` | `dev-rig` | Name tag for the instance |
+| `INSTANCE_NAME` | `openclaw-home` | Name tag for the instance |
 | `VOLUME_SIZE` | `20` | Disk size in GB (minimum 20 recommended) |
 | `OS` | `al2023` | Operating system (`al2023` or `ubuntu`) |
 | `TAILSCALE_AUTHKEY` | - | Auto-connect Tailscale ([create key](https://login.tailscale.com/admin/settings/keys)) |
@@ -57,7 +57,7 @@ Controls whether port 22 (SSH) is open to the internet:
 | `true` | Always private - SSH only via Tailscale |
 | `false` | Always open port 22 |
 
-When private mode is active, a separate security group (`dev-rig-sg-private`) is created without inbound SSH rules. You must use Tailscale SSH to connect.
+When private mode is active, a separate security group (`openclaw-home-sg-private`) is created without inbound SSH rules. You must use Tailscale SSH to connect.
 
 ### AWS Permissions
 
@@ -175,7 +175,7 @@ sudo tailscale up
 ### Can't connect after provisioning
 Wait 2 minutes for the user-data script to complete. Check:
 ```bash
-ssh -i ~/.ssh/dev-rig-key.pem ec2-user@<IP> 'cat /var/log/user-data.log'
+ssh -i ~/.ssh/openclaw-home-key.pem ec2-user@<IP> 'cat /var/log/user-data.log'
 ```
 
 ### Backspace not working
@@ -188,7 +188,7 @@ stty erase ^?
 
 ### Permission denied (SSH)
 ```bash
-chmod 400 ~/.ssh/dev-rig-key.pem
+chmod 400 ~/.ssh/openclaw-home-key.pem
 ```
 
 ## Cleanup
@@ -201,6 +201,6 @@ To fully clean up:
 
 To also remove the key pair:
 ```bash
-aws ec2 delete-key-pair --key-name dev-rig-key
-rm ~/.ssh/dev-rig-key.pem
+aws ec2 delete-key-pair --key-name openclaw-home-key
+rm ~/.ssh/openclaw-home-key.pem
 ```
