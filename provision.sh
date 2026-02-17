@@ -17,7 +17,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Configuration
 # ============================================
 INSTANCE_NAME="${INSTANCE_NAME:-openclaw-home}"
-INSTANCE_TYPE="${INSTANCE_TYPE:-t3.medium}"  # t2.micro for free tier
+INSTANCE_TYPE="${INSTANCE_TYPE:-t3.large}"   # 8GB RAM needed for gateway + opencode sessions
 VOLUME_SIZE="${VOLUME_SIZE:-20}"             # GB - Homebrew+bun+tools need ~8GB
 REGION="${AWS_REGION:-us-east-1}"
 KEY_NAME="${KEY_NAME:-openclaw-home-key}"
@@ -243,6 +243,13 @@ exec > /var/log/user-data.log 2>&1
 apt-get update && apt-get upgrade -y
 apt-get install -y git curl zsh tmux htop jq unzip build-essential
 
+# Swap (prevents OOM kills when running gateway + opencode sessions)
+fallocate -l 2G /swapfile
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile
+echo '/swapfile swap swap defaults 0 0' >> /etc/fstab
+
 # Install Homebrew (as ubuntu user)
 su - ubuntu -c 'NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
 
@@ -321,6 +328,13 @@ chsh -s /bin/zsh ubuntu
 # Configure openclaw for Bedrock with US inference profile
 su - ubuntu -c 'export AWS_PROFILE=default AWS_REGION=us-east-1 && source ~/.nvm/nvm.sh && openclaw config set models.bedrockDiscovery.enabled true && openclaw config set models.bedrockDiscovery.region us-east-1 && openclaw config set models.providers.amazon-bedrock --json "{\"baseUrl\":\"https://bedrock-runtime.us-east-1.amazonaws.com\",\"api\":\"bedrock-converse-stream\",\"auth\":\"aws-sdk\",\"models\":[{\"id\":\"us.anthropic.claude-opus-4-5-20251101-v1:0\",\"name\":\"Claude Opus 4.5 (US)\",\"reasoning\":true,\"input\":[\"text\",\"image\"],\"contextWindow\":200000,\"maxTokens\":8192,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0}}]}" && openclaw models set amazon-bedrock/us.anthropic.claude-opus-4-5-20251101-v1:0' || true
 
+# Gateway memory limits (prevent OOM from taking down the whole system)
+su - ubuntu -c 'mkdir -p ~/.config/systemd/user/openclaw-gateway.service.d && cat > ~/.config/systemd/user/openclaw-gateway.service.d/memory-limit.conf << MEMLIMIT
+[Service]
+MemoryMax=6G
+MemoryHigh=5G
+MEMLIMIT'
+
 # Signal completion
 touch /home/ubuntu/.bootstrap-complete
 USERDATA
@@ -335,6 +349,30 @@ exec > /var/log/user-data.log 2>&1
 dnf update -y
 # Note: curl-minimal is pre-installed on AL2023, don't install curl (conflicts)
 dnf install -y git zsh tmux htop jq unzip tar util-linux-user gcc make
+
+# Swap (prevents OOM kills when running gateway + opencode sessions)
+fallocate -l 2G /swapfile
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile
+echo '/swapfile swap swap defaults 0 0' >> /etc/fstab
+
+# CloudWatch agent for memory/disk monitoring
+dnf install -y amazon-cloudwatch-agent
+cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << 'CWCONFIG'
+{
+  "metrics": {
+    "namespace": "OpenClawEC2",
+    "metrics_collected": {
+      "mem": { "measurement": ["mem_used_percent", "mem_available"], "metrics_collection_interval": 60 },
+      "swap": { "measurement": ["swap_used_percent"], "metrics_collection_interval": 60 },
+      "disk": { "measurement": ["used_percent"], "resources": ["/"], "metrics_collection_interval": 60 }
+    },
+    "append_dimensions": { "InstanceId": "${aws:InstanceId}", "InstanceType": "${aws:InstanceType}" }
+  }
+}
+CWCONFIG
+/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
 
 # Install Homebrew (as ec2-user)
 su - ec2-user -c 'NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
@@ -413,6 +451,13 @@ chsh -s /bin/zsh ec2-user
 
 # Configure openclaw for Bedrock with US inference profile
 su - ec2-user -c 'export AWS_PROFILE=default AWS_REGION=us-east-1 && source ~/.nvm/nvm.sh && openclaw config set models.bedrockDiscovery.enabled true && openclaw config set models.bedrockDiscovery.region us-east-1 && openclaw config set models.providers.amazon-bedrock --json "{\"baseUrl\":\"https://bedrock-runtime.us-east-1.amazonaws.com\",\"api\":\"bedrock-converse-stream\",\"auth\":\"aws-sdk\",\"models\":[{\"id\":\"us.anthropic.claude-opus-4-5-20251101-v1:0\",\"name\":\"Claude Opus 4.5 (US)\",\"reasoning\":true,\"input\":[\"text\",\"image\"],\"contextWindow\":200000,\"maxTokens\":8192,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0}}]}" && openclaw models set amazon-bedrock/us.anthropic.claude-opus-4-5-20251101-v1:0' || true
+
+# Gateway memory limits (prevent OOM from taking down the whole system)
+su - ec2-user -c 'mkdir -p ~/.config/systemd/user/openclaw-gateway.service.d && cat > ~/.config/systemd/user/openclaw-gateway.service.d/memory-limit.conf << MEMLIMIT
+[Service]
+MemoryMax=6G
+MemoryHigh=5G
+MEMLIMIT'
 
 # Signal completion
 touch /home/ec2-user/.bootstrap-complete

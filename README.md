@@ -23,7 +23,8 @@ Bootstrap a complete OpenClaw environment on AWS EC2 in minutes. Includes zsh, T
 - SSH key will be created automatically
 
 ### EC2 Instance (created by provision.sh)
-- **Default**: Amazon Linux 2023, t3.medium (~$30/mo)
+- **Default**: Amazon Linux 2023, t3.large (~$60/mo, 8 GB RAM)
+- **Budget**: Set `INSTANCE_TYPE=t3.medium` (4 GB, may OOM under heavy use)
 - **Free tier**: Set `INSTANCE_TYPE=t2.micro` (750 hrs/mo for 12 months)
 
 ## Configuration
@@ -39,7 +40,7 @@ Key options:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `INSTANCE_TYPE` | `t3.medium` | EC2 instance type (`t2.micro` for free tier) |
+| `INSTANCE_TYPE` | `t3.large` | EC2 instance type (8GB RAM needed for gateway + opencode) |
 | `INSTANCE_NAME` | `openclaw-home` | Name tag for the instance |
 | `VOLUME_SIZE` | `20` | Disk size in GB (minimum 20 recommended) |
 | `OS` | `al2023` | Operating system (`al2023` or `ubuntu`) |
@@ -167,8 +168,8 @@ sudo tailscale up
 |------|------|-----|------|-------|
 | t2.micro | 1 | 1 GB | Free* | *750 hrs/mo for 12 months. Limited for AI tools |
 | t3.micro | 2 | 1 GB | ~$8/mo | Better CPU, still limited RAM |
-| t3.medium | 2 | 4 GB | ~$30/mo | **Recommended** for dev work |
-| t3.large | 2 | 8 GB | ~$60/mo | More comfortable for heavy use |
+| t3.medium | 2 | 4 GB | ~$30/mo | Tight - may OOM with gateway + opencode |
+| t3.large | 2 | 8 GB | ~$60/mo | **Recommended** for gateway + opencode sessions |
 
 ## Security
 
@@ -231,6 +232,42 @@ If Tailscale is broken AND port 22 is closed:
 3. Fix Tailscale: `sudo systemctl restart tailscaled && sudo tailscale up`
 4. Close port 22 again
 
+## Monitoring
+
+Provisioning installs the CloudWatch agent, which reports memory, swap, and disk metrics to the `OpenClawEC2` namespace every 60 seconds.
+
+### What's included automatically
+- **2 GB swap file** — prevents hard OOM kills
+- **CloudWatch agent** — memory/swap/disk metrics
+- **Gateway memory limits** — `MemoryHigh=5G`, `MemoryMax=6G` (systemd cgroup)
+
+### Setting up alarms (recommended)
+After provisioning, create CloudWatch alarms + SNS notifications:
+```bash
+# Create SNS topic and subscribe your email
+aws sns create-topic --name dev-rig-alerts
+aws sns subscribe --topic-arn arn:aws:sns:us-east-1:ACCOUNT_ID:dev-rig-alerts \
+  --protocol email --notification-endpoint your@email.com
+# Confirm the subscription via the email you receive
+
+# Memory alarm (>85% for 5 min)
+aws cloudwatch put-metric-alarm --alarm-name "dev-rig-memory-high" \
+  --namespace OpenClawEC2 --metric-name mem_used_percent \
+  --dimensions Name=InstanceId,Value=INSTANCE_ID \
+  --statistic Average --period 300 --evaluation-periods 1 --threshold 85 \
+  --comparison-operator GreaterThanOrEqualToThreshold \
+  --alarm-actions arn:aws:sns:us-east-1:ACCOUNT_ID:dev-rig-alerts
+
+# Auto-recovery on system failure
+aws cloudwatch put-metric-alarm --alarm-name "dev-rig-status-check-failed" \
+  --namespace AWS/EC2 --metric-name StatusCheckFailed_System \
+  --dimensions Name=InstanceId,Value=INSTANCE_ID \
+  --statistic Maximum --period 60 --evaluation-periods 2 --threshold 1 \
+  --comparison-operator GreaterThanOrEqualToThreshold \
+  --alarm-actions arn:aws:automate:us-east-1:ec2:recover \
+    arn:aws:sns:us-east-1:ACCOUNT_ID:dev-rig-alerts
+```
+
 ## Troubleshooting
 
 ### Can't connect after provisioning
@@ -242,6 +279,24 @@ ssh -i ~/.ssh/openclaw-home-key.pem ec2-user@<IP> 'cat /var/log/user-data.log'
 ### Backspace not working
 ```bash
 stty erase ^?
+```
+
+### Instance unresponsive (SSH times out, Tailscale ping fails)
+Likely an OOM kill that cascaded. AWS health checks may still say "ok".
+```bash
+# Try a reboot first
+aws ec2 reboot-instances --instance-ids INSTANCE_ID --region us-east-1
+
+# If still unresponsive after 2 min, do a full stop/start
+# (moves to new hardware, changes public IP, Tailscale IP stays the same)
+aws ec2 stop-instances --instance-ids INSTANCE_ID --region us-east-1
+aws ec2 wait instance-stopped --instance-ids INSTANCE_ID --region us-east-1
+aws ec2 start-instances --instance-ids INSTANCE_ID --region us-east-1
+```
+
+Check for OOM kills after recovery:
+```bash
+ssh ec2-user@jarvis "sudo journalctl -b -1 -p err --no-pager | grep -i oom"
 ```
 
 ### Instance IP changed after restart
