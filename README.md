@@ -245,27 +245,27 @@ Provisioning installs the CloudWatch agent, which reports memory, swap, and disk
 After provisioning, create CloudWatch alarms + SNS notifications:
 ```bash
 # Create SNS topic and subscribe your email
-aws sns create-topic --name dev-rig-alerts
-aws sns subscribe --topic-arn arn:aws:sns:us-east-1:ACCOUNT_ID:dev-rig-alerts \
+aws sns create-topic --name openclaw-ec2-alerts
+aws sns subscribe --topic-arn arn:aws:sns:us-east-1:ACCOUNT_ID:openclaw-ec2-alerts \
   --protocol email --notification-endpoint your@email.com
 # Confirm the subscription via the email you receive
 
 # Memory alarm (>85% for 5 min)
-aws cloudwatch put-metric-alarm --alarm-name "dev-rig-memory-high" \
+aws cloudwatch put-metric-alarm --alarm-name "openclaw-ec2-memory-high" \
   --namespace OpenClawEC2 --metric-name mem_used_percent \
   --dimensions Name=InstanceId,Value=INSTANCE_ID \
   --statistic Average --period 300 --evaluation-periods 1 --threshold 85 \
   --comparison-operator GreaterThanOrEqualToThreshold \
-  --alarm-actions arn:aws:sns:us-east-1:ACCOUNT_ID:dev-rig-alerts
+  --alarm-actions arn:aws:sns:us-east-1:ACCOUNT_ID:openclaw-ec2-alerts
 
 # Auto-recovery on system failure
-aws cloudwatch put-metric-alarm --alarm-name "dev-rig-status-check-failed" \
+aws cloudwatch put-metric-alarm --alarm-name "openclaw-ec2-status-check-failed" \
   --namespace AWS/EC2 --metric-name StatusCheckFailed_System \
   --dimensions Name=InstanceId,Value=INSTANCE_ID \
   --statistic Maximum --period 60 --evaluation-periods 2 --threshold 1 \
   --comparison-operator GreaterThanOrEqualToThreshold \
   --alarm-actions arn:aws:automate:us-east-1:ec2:recover \
-    arn:aws:sns:us-east-1:ACCOUNT_ID:dev-rig-alerts
+    arn:aws:sns:us-east-1:ACCOUNT_ID:openclaw-ec2-alerts
 ```
 
 ## Troubleshooting
